@@ -2,6 +2,7 @@
 
 function Sequence(...readers) {
   return state => {
+    state = Object.assign({}, state, {match: undefined})
     for (const read of readers) {
       state = read(state)
       if (state.error) return state
@@ -111,16 +112,26 @@ const $ = read => state => {
 
 const Identifier = $(OneOrMore(CharIn('a', 'z')))
     , __ = Drop(ZeroOrMore(Or(Exactly(' '), Exactly('\n'))))
-    , AdditiveTerm = As(Sequence(__
+    , AdditiveTerm = Sequence(__
         , As(Identifier, 'lhs'), __
         , Drop(Or(Exactly('+'), Exactly('-'))), __
         , As(Identifier, 'rhs'), __
-      ), 'Sum')
-    , Expression = Many(Or(AdditiveTerm, Identifier), {min: 1, max: 1})
-    , Assignment = As(Sequence(__, As(Identifier, 'lhs'), __, Drop(Exactly('=')), __, As(Expression, 'rhs'), __), 'Assignment')
+        , state => Object.assign({}, state, {
+          match: Object.assign({type: 'Add'}, state.match)
+        })        
+      )
+    , Expression = Or(AdditiveTerm, Identifier)
+    , Assignment = Sequence(__
+        , As(Identifier, 'lhs'), __
+        , Drop(Exactly('=')), __
+        , As(Expression, 'rhs'), __
+        , state => Object.assign({}, state, {
+          match: Object.assign({type: 'Assignment'}, state.match)
+        })
+      )
 
-    , Start = OneOrMore(Or(Assignment, Expression))
+    , Start = ZeroOrMore(Or(Assignment, Expression))
 
-console.log(JSON.stringify(Start({input: 'x = y\nx + z'}), 0, 2))
+console.log(JSON.stringify(Start({input: 'x = y\nx + z\nf+n'}), 0, 2))
 
 module.exports = {Many, CharIn, Start, Assignment, Expression}
