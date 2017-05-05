@@ -48,9 +48,9 @@ const __ = Drop(ZeroOrMore(Or(Exactly(' '))))
               })        
             )
             , NextPrecedenceGroup)
-    , MultiplicativeTerm = InfixOperatorPrecedenceGroup('Aggregate', ['*', '/'])
-    , AdditiveTerm = InfixOperatorPrecedenceGroup('Aggregate', ['+', '-'], MultiplicativeTerm)
-    , Expression = Or(AdditiveTerm, Identifier)
+    , Multiplicative = InfixOperatorPrecedenceGroup('Aggregate', ['*', '/'])
+    , Additive = InfixOperatorPrecedenceGroup('Aggregate', ['+', '-'], Multiplicative)
+    , Expression = Or(Additive, Multiplicative, Identifier)
     , Assignment = Sequence(__
         , As(Identifier, 'lhs'), __
         , Drop(Exactly('=')), __

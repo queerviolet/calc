@@ -38,7 +38,8 @@ function main([_node, _self, file]) {
 function lineProcessor(state, rl) {
   return input => {
     try {
-      const {error, match} = Line({input})
+      const {input: noise, match, error} = Line({input})
+      if (noise) console.error('Warning: ignoring noise at end of line: "%s"', noise)
       if (error) return console.error(error)
       console.log('----- <AST> -----')
       console.log(JSON.stringify(match, 0, 2))
