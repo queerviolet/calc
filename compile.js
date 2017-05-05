@@ -42,8 +42,7 @@ const evaluators = {
     })
   },
 
-  mul: ast => chain(ast),
-  add: ast => chain(ast),
+  Aggregate: ast => chain(ast),
 }
 
 const compile = module.exports = ast => {
