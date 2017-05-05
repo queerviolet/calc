@@ -55,9 +55,17 @@ const __ = Drop(ZeroOrMore(Or(Exactly(' '))))
           match: Object.assign({type: 'Assignment'}, state.match)
         })
       )
+    , Line = Or(Assignment, Expression)
+    , Newlines = Drop(ZeroOrMore(Exactly('\n')))
+    , Program = OneOrMore(Sequence(Newlines, Line, Newlines))
 
-    , Start = ZeroOrMore(Sequence(Or(Assignment, Expression), Drop(ZeroOrMore(Exactly('\n')))))
+if (module === require.main) {
+  const input = `
+    x = -2 * y
+    x * z + k
+    f+n
+  `
+  console.log(JSON.stringify(Program({input}), 0, 2))
+}
 
-console.log(JSON.stringify(Start({input: 'x = -2 * y\nx * z + k\nf+n\n'}), 0, 2))
-
-module.exports = {Many, CharIn, Start, Assignment, Expression}
+module.exports = {Line, Program}
