@@ -101,7 +101,6 @@ const Many = (
     next = read(state)
     if (next.error) break
     match = reduce(match, next.match)
-    console.log(match)
     ++count
     state = next
   }
@@ -148,7 +147,6 @@ const Drop = read => state => {
 const $ = read => state => {
   const next = read(state)
   if (next.error) return next
-  console.log(state.match)
   return {
     input: next.input,
     match: next.match && next.match.join('')
