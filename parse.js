@@ -1,5 +1,7 @@
 'use strict'
 
+// Functional composition tools for building a parser.
+
 const willExport = () => ({
   Fail,
   CharIn,
