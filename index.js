@@ -18,7 +18,7 @@ function main([_node, _self, file]) {
   if (file) {
     return fs.readFile(file, (err, ok) => err
       ? console.error('%s: %s', file, err)
-      : print(runProgram(ok.toString())))
+      : runProgram(ok.toString()))
   }
 
   // Interactive mode.
@@ -31,15 +31,16 @@ function main([_node, _self, file]) {
   rl.on('line', repl(rl))
 }
 
-function repl(rl, state=undefined) {
+function repl(rl, state=undefined, calculation=new compile.Calculation()) {
   return input => {
     try {
       const {input: noise, match, error} = Line({input})
       if (noise) console.error('Warning: ignoring noise at end of line: "%s"', noise)
       if (error) return console.error(error)
       trace.ast(JSON.stringify(match, 0, 2))
-      state = compile(match)(state)
-      print(state)
+      calculation = calculation.compile(match)      
+      state = calculation.run(state)
+      print(state, calculation)
     } finally {
       rl.prompt()
     }
@@ -51,9 +52,11 @@ function runProgram(input, filename='__inputfile__') {
   if (error) {
     return console.error('%s: %s', filename, error)
   }
-  return compile(match)()
+  const calculation = compile(match)
+  print(calculation.run(), calculation)
 }
 
-function print(state) {
-  console.log('value:', state.get('value'), '\tmem:', state.get('memory').toJS(), state.get('cache', []).length)
+function print(state, calculation) {
+  console.log('value:', state.get('value'), '\tmem:', state.get('memory').toJS())
+  if (calculation) console.log('(%s entries in cache)', calculation.cache.size)
 }
