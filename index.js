@@ -7,11 +7,6 @@ const readline = require('readline')
     , compile = require('./compile')
     , {Program, Line} = require('./grammar')
 
-// const ast = Program({input: 'x = 4\nx + 2'}).match
-// console.log('parse tree', JSON.stringify(ast, 0, 2))
-// const program = ast.map(compile).reduce((prior, func) => state => func(prior(state)))
-// console.log(program())
-
 if (module === require.main) { main(process.argv) }
 
 function main([_node, _self, file]) {
@@ -19,7 +14,7 @@ function main([_node, _self, file]) {
   if (file) {
     return fs.readFile(file, (err, ok) => err
       ? console.error('%s: %s', file, err)
-      : console.log(runProgram(ok.toString())))
+      : print(runProgram(ok.toString())))
   }
 
   // Interactive mode.
@@ -42,7 +37,7 @@ function repl(rl, state=undefined) {
       console.log(JSON.stringify(match, 0, 2))
       console.log('----- </AST> -----')
       state = compile(match)(state)
-      console.log(state)
+      print(state)
     } finally {
       rl.prompt()
     }
@@ -57,4 +52,8 @@ function runProgram(input, filename='__inputfile__') {
     return console.error('%s: %s', filename, error)
   }
   return compile(match)()
+}
+
+function print(state) {
+  console.log('value:', state.get('value'), '\tmem:', state.get('memory').toJS())
 }

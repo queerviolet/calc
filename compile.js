@@ -43,14 +43,20 @@ const evaluators = {
   },
 
   Program({lines}) {
-    return (state=Map()) => lines.map(compile)
+    return (state=Map()) => lines.map(line => compile(line, state))
       .reduce((state, reduce) => reduce(state), state)
   }
 }
 
-const compile = module.exports = ast => {
+const cacheKey = ast => ['cache', ast]
+const compile = module.exports = (ast, state=Map()) => {
+  const key = cacheKey(ast)
+      , cached = state.getIn(key)
+  if (cached) return cached
+
   if (ast.type in evaluators)
-    return evaluators[ast.type](ast)
+    return (rtState=state) =>
+      evaluators[ast.type](ast)(rtState.setIn(key, evaluators[ast.type](ast)))
   console.error('unknown type', ast.type, 'at node', ast)
   return state => state
 }
