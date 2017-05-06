@@ -8,6 +8,7 @@ const reducers = {
   '/': (acc, rhs) => acc / rhs,
   '+': (acc, rhs) => acc + rhs,
   '-': (acc, rhs) => acc - rhs,
+  'mod': (acc, rhs) => acc % rhs,
 }
 
 const value = state => state.get('value')

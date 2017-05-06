@@ -32,9 +32,14 @@ const __ = Drop(ZeroOrMore(Or(Exactly(' '))))
           match: Object.assign({type: 'Literal'}, state.match)
         })
     )
-    , IdentifierOrLiteral = Or(Identifier, Literal)
+    , Parenthesized = Sequence(__
+      , Drop(Exactly('(')), __
+      , state => Expression(state), __
+      , Drop(Exactly(')')), __
+    )
+    , Primary = Or(Parenthesized, Identifier, Literal)
     , InfixOperatorPrecedenceGroup = (
-        type, [...operators], NextPrecedenceGroup=IdentifierOrLiteral) =>
+        type, [...operators], NextPrecedenceGroup=Primary) =>
         Or(Sequence(__
               , As(NextPrecedenceGroup, 'first'), __
               , As(
@@ -48,9 +53,9 @@ const __ = Drop(ZeroOrMore(Or(Exactly(' '))))
               })        
             )
             , NextPrecedenceGroup)
-    , Multiplicative = InfixOperatorPrecedenceGroup('Aggregate', ['*', '/'])
+    , Multiplicative = InfixOperatorPrecedenceGroup('Aggregate', ['*', '/', 'mod'])
     , Additive = InfixOperatorPrecedenceGroup('Aggregate', ['+', '-'], Multiplicative)
-    , Expression = Or(Additive, Multiplicative, Identifier)
+    , Expression = Or(Additive, Multiplicative, Primary)
     , Assignment = Sequence(__
         , As(Identifier, 'lhs'), __
         , Drop(Exactly('=')), __
