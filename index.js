@@ -38,8 +38,8 @@ function repl(rl, state=undefined, calculation=new compile.Calculation()) {
       if (noise) console.error('Warning: ignoring noise at end of line: "%s"', noise)
       if (error) return console.error(error)
       trace.ast(JSON.stringify(match, 0, 2))
-      calculation = calculation.compile(match)      
-      state = calculation.run(state)
+      const run = calculation.compile(match)
+      state = run(state)
       print(state, calculation)
     } finally {
       rl.prompt()
@@ -52,8 +52,9 @@ function runProgram(input, filename='__inputfile__') {
   if (error) {
     return console.error('%s: %s', filename, error)
   }
-  const calculation = compile(match)
-  print(calculation.run(), calculation)
+  const calculation = new compile.Calculation()
+      , program = calculation.compile(match)
+  print(program(), calculation)
 }
 
 function print(state, calculation) {
