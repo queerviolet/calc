@@ -38,9 +38,9 @@ const __ = Drop(ZeroOrMore(Or(Exactly(' '))))
       , Drop(Exactly(')')), __
     )
     , Primary = Or(Parenthesized, Identifier, Literal)
-    , InfixOperatorPrecedenceGroup = (
-        type, [...operators], NextPrecedenceGroup=Primary) =>
-        Or(Sequence(__
+    , InfixOperatorPrecedenceGroup =
+        (type, [...operators], NextPrecedenceGroup=Primary) =>
+          Or(Sequence(__
               , As(NextPrecedenceGroup, 'first'), __
               , As(
                   OneOrMore(Sequence(
