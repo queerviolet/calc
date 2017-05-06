@@ -23,19 +23,16 @@ function main([_node, _self, file]) {
   }
 
   // Interactive mode.
-  const state = {
-    identifiers: {}
-  }
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   })
   rl.setPrompt('>>> ')
   rl.prompt()
-  rl.on('line', lineProcessor(state, rl))
+  rl.on('line', repl(rl))
 }
 
-function lineProcessor(state, rl) {
+function repl(rl, state=undefined) {
   return input => {
     try {
       const {input: noise, match, error} = Line({input})
@@ -52,12 +49,12 @@ function lineProcessor(state, rl) {
   }
 }
 
+const trace = state => (console.log(state), state)
+
 function runProgram(input, filename='__inputfile__') {
   const {error, match} = Program({input})
   if (error) {
     return console.error('%s: %s', filename, error)
   }
-  return match.map(compile).reduce((state, reduce) => reduce(state), {
-    identifiers: {}
-  })
+  return compile(match)()
 }

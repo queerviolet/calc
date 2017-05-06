@@ -61,7 +61,12 @@ const __ = Drop(ZeroOrMore(Or(Exactly(' '))))
       )
     , Line = Or(Assignment, Expression)
     , Newlines = Drop(ZeroOrMore(Exactly('\n')))
-    , Program = OneOrMore(Sequence(Newlines, Line, Newlines))
+    , Program = Sequence(
+        OneOrMore(Sequence(Newlines, Line, Newlines)),
+        state => Object.assign({}, state, {
+          match: { type: 'Program', lines: state.match }
+        })
+      )
 
 if (module === require.main) {
   const input = `

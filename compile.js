@@ -1,5 +1,7 @@
 'use strict'
 
+const {Map} = require('immutable')
+
 const reducers = {
   '*': (acc, rhs) => acc * rhs,
   '/': (acc, rhs) => acc / rhs,
@@ -7,24 +9,22 @@ const reducers = {
   '-': (acc, rhs) => acc - rhs,
 }
 
+const value = state => state.get('value')
+    , mem = id => ['memory', id]
+
 const evaluators = {
   Identifier({identifier}) {
-    return ({identifiers}={}) => ({ identifiers, value: identifiers[identifier] })
+    return (state=Map()) => state.set('value', state.getIn(mem(identifier)))
   },
 
   Assignment({lhs: {identifier}, rhs}) {
-    return (state={}) => ({
-      identifiers: Object.assign({}, state.identifiers || {}, {
-        [identifier]: compile(rhs)(state).value
-      })
-    })
+    return (state=Map()) => state.setIn(mem(identifier),
+      value(compile(rhs)(state)))
   },
 
   Literal({sign, digits}) {
-    return ({identifiers}={}) => ({
-      identifiers,
-      value: +`${sign}${digits}`
-    })
+    return (state=Map()) => state.set('value',
+      +`${sign}${digits}`)
   },
 
   Aggregate(
@@ -35,13 +35,16 @@ const evaluators = {
       eval: compile(rhs)
     }))
   ) {
-    return (state={identifiers: {}}) => ({
-      identifiers: state.identifiers,
-      value: nodes.reduce((acc, node) =>
-        reducers[node.operator](acc, node.eval(state).value),
-        initial(state).value
-      )
-    })
+    return (state=Map()) => state.set('value',
+      nodes.reduce((acc, node) =>
+        reducers[node.operator](acc, value(node.eval(state))),
+        value(initial(state))
+      ))
+  },
+
+  Program({lines}) {
+    return (state=Map()) => lines.map(compile)
+      .reduce((state, reduce) => reduce(state), state)
   }
 }
 
