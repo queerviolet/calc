@@ -3,6 +3,10 @@
 // A little calculator.
 
 const readline = require('readline')
+    , debug = require('debug')
+    , trace = {
+      ast: debug('calc:ast'),
+    }
     , fs = require('fs')
     , compile = require('./compile')
     , {Program, Line} = require('./grammar')
@@ -33,9 +37,7 @@ function repl(rl, state=undefined) {
       const {input: noise, match, error} = Line({input})
       if (noise) console.error('Warning: ignoring noise at end of line: "%s"', noise)
       if (error) return console.error(error)
-      console.log('----- <AST> -----')
-      console.log(JSON.stringify(match, 0, 2))
-      console.log('----- </AST> -----')
+      trace.ast(JSON.stringify(match, 0, 2))
       state = compile(match)(state)
       print(state)
     } finally {
@@ -43,8 +45,6 @@ function repl(rl, state=undefined) {
     }
   }
 }
-
-const trace = state => (console.log(state), state)
 
 function runProgram(input, filename='__inputfile__') {
   const {error, match} = Program({input})
@@ -55,5 +55,5 @@ function runProgram(input, filename='__inputfile__') {
 }
 
 function print(state) {
-  console.log('value:', state.get('value'), '\tmem:', state.get('memory').toJS())
+  console.log('value:', state.get('value'), '\tmem:', state.get('memory').toJS(), state.get('cache', []).length)
 }

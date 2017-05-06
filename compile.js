@@ -1,6 +1,7 @@
 'use strict'
 
-const {Map} = require('immutable')
+const debug = require('debug')('compile')
+    , {Map, fromJS} = require('immutable')
 
 const reducers = {
   '*': (acc, rhs) => acc * rhs,
@@ -48,15 +49,21 @@ const evaluators = {
   }
 }
 
-const cacheKey = ast => ['cache', ast]
+const cacheKey = ast => ['cache', fromJS(ast)]
 const compile = module.exports = (ast, state=Map()) => {
   const key = cacheKey(ast)
       , cached = state.getIn(key)
-  if (cached) return cached
+  debug('%s: cache lookup', key)
+  if (cached) {
+    debug('%s: cache hit', key)
+    return cached
+  }
 
-  if (ast.type in evaluators)
+  if (ast.type in evaluators) {
+    const evaluator = evaluators[ast.type](ast)
     return (rtState=state) =>
-      evaluators[ast.type](ast)(rtState.setIn(key, evaluators[ast.type](ast)))
+      evaluator(rtState.setIn(key, evaluator))
+  }
   console.error('unknown type', ast.type, 'at node', ast)
   return state => state
 }
