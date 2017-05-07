@@ -11,8 +11,7 @@ const reducers = {
   'mod': (acc, rhs) => acc % rhs,
 }
 
-const value = state => state.get('value')
-    , mem = id => ['memory', id]
+const mem = id => ['memory', id]
 
 const evaluators = {
   Identifier({identifier}) {
@@ -21,7 +20,7 @@ const evaluators = {
 
   Assignment({lhs: {identifier}, rhs}) {
     return (state=State()) => state.setIn(mem(identifier),
-      value(this.compile(rhs)(state)))
+      this.compile(rhs)(state).value)
   },
 
   Literal({sign, digits}) {
@@ -39,8 +38,8 @@ const evaluators = {
   ) {
     return (state=State()) => state.set('value',
       nodes.reduce((acc, node) =>
-        reducers[node.operator](acc, value(node.eval(state))),
-        value(initial(state))
+        reducers[node.operator](acc, node.eval(state).value),
+        initial(state).value
       ))
   },
 
