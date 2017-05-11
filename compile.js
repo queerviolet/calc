@@ -1,6 +1,7 @@
 'use strict'
 
 const debug = require('debug')('compile')
+    , debugCache = require('debug')('compile:cache')
     , {List, Map, Record, fromJS} = require('immutable')
 
 const reducers = {
@@ -19,8 +20,8 @@ const evaluators = {
   },
 
   Assignment({lhs: {identifier}, rhs}) {
-    return (state=State()) => state.setIn(mem(identifier),
-      this.compile(rhs)(state).value)
+    const rhs_ = this.compile(rhs)
+    return (state=State()) => state.setIn(mem(identifier), rhs_(state).value)
   },
 
   Literal({sign, digits}) {
@@ -31,21 +32,22 @@ const evaluators = {
   Aggregate(
     {first, rest},
     initial=this.compile(first),
-    nodes=rest.map(({operator, rhs}) => ({
+    operations=rest.map(({operator, rhs}) => ({
       operator,
-      eval: this.compile(rhs)
+      rhs: this.compile(rhs)
     }))
   ) {
     return (state=State()) => state.set('value',
-      nodes.reduce((acc, node) =>
-        reducers[node.operator](acc, node.eval(state).value),
+      operations.reduce((lhs, {operator, rhs}) =>
+        reducers[operator](lhs, rhs(state).value),
         initial(state).value
       ))
   },
 
   Program({lines}) {
-    return (state=State()) => lines.map(line => this.compile(line, state))
-      .reduce((state, reduce) => reduce(state), state)
+    const program = lines.map(line => this.compile(line))
+    return (state=State()) =>
+      program.reduce((state, reduce) => reduce(state), state)
   },
 
   Noop() { return state => state }
@@ -66,15 +68,17 @@ class Calculation {
         , key = fromJS(ast)
         , hit = this.cache.get(key)
     if (hit) {
-      debug('cache hit for key', key)
+      debugCache('hit for key', key)
       return hit
     }
     if (type in evaluators) {
+      debug('compiling %s node', type)
       const calculation = evaluators[type].call(this, ast)
       this.cache = this.cache.set(key, calculation)
+      debugCache('inserted key', key)
       return calculation
     }
-    console.error('invalid type: %s', type)    
+    debug('invalid type: %s', type)
     return this
   }
 }
